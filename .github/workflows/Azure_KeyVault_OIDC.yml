@@ -1,0 +1,33 @@
+name: Use Azure Key Vault Secret
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  use-secret:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Login to Azure OIDC
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Get secret from Azure Key Vault
+      id: get-secret
+      run: |
+        SECRET_VALUE=$(az keyvault secret show --name <your-secret-name> --vault-name <your-keyvault-name> --query value -o tsv)
+        echo "::set-output name=secret::$SECRET_VALUE"
+
+    - name: Use secret in a script
+      run: |
+        echo "The secret value is: ${{ steps.get-secret.outputs.secret }}"
